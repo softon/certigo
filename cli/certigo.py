@@ -63,8 +63,19 @@ def digitally_sign(cert_path, key_path, password, pdf_path):
 
 # Send email
 def send_email(sender_email, app_password, to_email, subject, body, attachment):
-    yag = yagmail.SMTP(user=sender_email, password=app_password)
-    yag.send(to=to_email, subject=subject, contents=body, attachments=attachment)
+    try:
+        yag = yagmail.SMTP(
+            user=sender_email, 
+            password=app_password,
+            host="smtp.gmail.com",
+            port=587,
+            smtp_starttls=True,
+            smtp_ssl=False
+        )
+        yag.send(to=to_email, subject=subject, contents=body, attachments=attachment)
+        print(f"📧 Email sent to {to_email}")
+    except Exception as e:
+        print(f"❌ Failed to send email to {to_email}: {e}")
 
 # CLI
 @click.command()
@@ -74,9 +85,9 @@ def send_email(sender_email, app_password, to_email, subject, body, attachment):
 @click.option('--orientation', type=click.Choice(['portrait', 'landscape']), default='landscape')
 @click.option('--paper-size', type=click.Choice(['A4', 'LETTER']), default='A4')
 @click.option('--sign/--no-sign', default=False)
-@click.option('--cert', default='my-cert.pem')
-@click.option('--key', default='my-key.pem')
-@click.option('--password', default='yourpassword')
+@click.option('--cert', default='cert.pem')
+@click.option('--key', default='key.pem')
+@click.option('--password', default='password', help='Password for the private key. If not set, Default password is password.')
 @click.option('--email/--no-email', default=False)
 @click.option('--sender', help='Gmail sender email')
 @click.option('--app-pass', help='Gmail app password')
