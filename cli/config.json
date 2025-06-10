@@ -1,0 +1,18 @@
+{
+  "name": {
+    "x": 420,
+    "y": 270,
+    "font": "Helvetica-Bold",
+    "size": 28,
+    "color": [0, 0, 0],
+    "align": "center"
+  },
+  "cert_no": {
+    "x": 680,
+    "y": 550,
+    "font": "Helvetica",
+    "size": 12,
+    "color": [110, 110, 110],
+    "align": "left"
+  }
+}

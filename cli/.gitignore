@@ -1,0 +1,3 @@
+cli/venv
+certificates/
+cli/__pycache__
