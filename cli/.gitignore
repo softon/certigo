@@ -1,5 +1,9 @@
-cli/venv
+venv
 certificates/
-cli/__pycache__
+__pycache__
 cert.pem
 key.pem
+dist/
+build/
+Output/
+*.spec
