@@ -4,120 +4,204 @@ import json
 import pandas as pd
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QFileDialog, QVBoxLayout, QLabel, QPushButton, QLineEdit,
-    QComboBox, QTextEdit, QCheckBox, QHBoxLayout, QGroupBox, QProgressBar, QMessageBox
+    QComboBox, QTextEdit, QCheckBox, QHBoxLayout, QGroupBox, QProgressBar, QMessageBox,
+    QTabWidget, QSpinBox, QColorDialog
 )
 from PyQt5.QtCore import Qt
 from certigo import create_certificate, digitally_sign, send_email
+
+CONFIG_PATH = "config.json"
 
 class CertigoGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Certigo Certificate Generator")
-        self.setGeometry(100, 100, 700, 750)
+        self.setGeometry(100, 100, 750, 800)
 
-        self.layout = QVBoxLayout()
+        self.tabs = QTabWidget()
+        self.main_tab = QWidget()
+        self.settings_tab = QWidget()
 
-        self.build_input_section()
-        self.build_sign_section()
-        self.build_email_section()
-        self.build_controls()
+        self.tabs.addTab(self.main_tab, "Main")
+        self.tabs.addTab(self.settings_tab, "Settings")
 
-        self.setLayout(self.layout)
+        self.build_main_tab()
+        self.build_settings_tab()
 
-    def build_input_section(self):
-        group = QGroupBox("1. Input Files")
-        vbox = QVBoxLayout()
-        self.excel_input = self.add_file_input("Excel File (.xlsx)", "*.xlsx", vbox)
-        self.bg_input = self.add_file_input("Background Image", "*.png *.jpg", vbox)
-        self.config_input = self.add_file_input("Layout Config (JSON)", "*.json", vbox)
-        self.output_dir_input = self.add_folder_input("Output Folder", vbox)
-        self.paper_size = self.add_dropdown("Paper Size", ["A4", "LETTER"], vbox)
-        self.orientation = self.add_dropdown("Orientation", ["landscape", "portrait"], vbox)
-        group.setLayout(vbox)
-        self.layout.addWidget(group)
+        layout = QVBoxLayout()
+        layout.addWidget(self.tabs)
+        self.setLayout(layout)
 
-    def build_sign_section(self):
+    # ========== MAIN TAB ==========
+    def build_main_tab(self):
+        layout = QVBoxLayout()
+
+        self.excel_input = self.add_file_input("Excel File (.xlsx)", "*.xlsx", layout)
+        self.bg_input = self.add_file_input("Background Image", "*.png *.jpg", layout)
+        self.output_dir_input = self.add_folder_input("Output Folder", layout)
+        self.paper_size = self.add_dropdown("Paper Size", ["A4", "LETTER"], layout)
+        self.orientation = self.add_dropdown("Orientation", ["landscape", "portrait"], layout)
+
         self.sign_checkbox = QCheckBox("Enable Digital Signing")
         self.sign_checkbox.stateChanged.connect(self.toggle_sign_section)
-        self.layout.addWidget(self.sign_checkbox)
+        layout.addWidget(self.sign_checkbox)
 
-        self.sign_group = QGroupBox("2. Digital Sign Settings")
+        self.sign_group = QGroupBox("Digital Sign Settings")
         self.sign_group.setVisible(False)
-        vbox = QVBoxLayout()
-        self.cert_input = self.add_file_input("Certificate File (.pem)", "*.pem", vbox)
-        self.key_input = self.add_file_input("Private Key File (.pem)", "*.pem", vbox)
-        self.pass_input = self.add_text_input("Private Key Password", vbox, echo=True)
-        self.sign_group.setLayout(vbox)
-        self.layout.addWidget(self.sign_group)
+        sign_layout = QVBoxLayout()
+        self.cert_input = self.add_file_input("Certificate File (.pem)", "*.pem", sign_layout)
+        self.key_input = self.add_file_input("Private Key File (.pem)", "*.pem", sign_layout)
+        self.pass_input = self.add_text_input("Private Key Password", sign_layout, echo=True)
+        self.sign_group.setLayout(sign_layout)
+        layout.addWidget(self.sign_group)
 
-    def build_email_section(self):
         self.email_checkbox = QCheckBox("Enable Emailing Certificates")
         self.email_checkbox.stateChanged.connect(self.toggle_email_section)
-        self.layout.addWidget(self.email_checkbox)
+        layout.addWidget(self.email_checkbox)
 
-        self.email_group = QGroupBox("3. Email Settings")
+        self.email_group = QGroupBox("Email Settings")
         self.email_group.setVisible(False)
-        vbox = QVBoxLayout()
-
-        self.sender_input = self.add_text_input("Sender Gmail", vbox)
-
-        vbox.addWidget(QLabel("Gmail App Password"))
-        hbox = QHBoxLayout()
+        email_layout = QVBoxLayout()
+        self.sender_input = self.add_text_input("Sender Gmail", email_layout)
+        email_layout.addWidget(QLabel("Gmail App Password"))
+        email_hbox = QHBoxLayout()
         self.app_pass_input = QLineEdit()
         self.app_pass_input.setEchoMode(QLineEdit.Password)
-        hbox.addWidget(self.app_pass_input)
-
         help_btn = QPushButton("❓")
         help_btn.setFixedWidth(30)
         help_btn.clicked.connect(self.show_gmail_help)
-        hbox.addWidget(help_btn)
+        email_hbox.addWidget(self.app_pass_input)
+        email_hbox.addWidget(help_btn)
+        email_layout.addLayout(email_hbox)
+        self.email_group.setLayout(email_layout)
+        layout.addWidget(self.email_group)
 
-        vbox.addLayout(hbox)
-        self.email_group.setLayout(vbox)
-        self.layout.addWidget(self.email_group)
-
-    def build_controls(self):
         self.run_button = QPushButton("Generate Certificates")
         self.run_button.clicked.connect(self.run_certigo)
-        self.layout.addWidget(self.run_button)
+        layout.addWidget(self.run_button)
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        self.layout.addWidget(self.progress_bar)
+        layout.addWidget(self.progress_bar)
 
         self.log_output = QTextEdit()
         self.log_output.setReadOnly(True)
-        self.layout.addWidget(self.log_output)
+        layout.addWidget(self.log_output)
 
+        self.main_tab.setLayout(layout)
+
+    # ========== SETTINGS TAB ==========
+    def build_settings_tab(self):
+        layout = QVBoxLayout()
+
+        self.config = self.load_config()
+
+        self.setting_fields = {}
+        for key in ["name", "cert_no"]:
+            group = QGroupBox(f"{key.upper()} Settings")
+            vbox = QVBoxLayout()
+            self.setting_fields[key] = {}
+
+            for field in ["x", "y", "font", "size", "align"]:
+                hbox = QHBoxLayout()
+                label = QLabel(field)
+                hbox.addWidget(label)
+                if field in ["x", "y", "size"]:
+                    spin = QSpinBox()
+                    spin.setMaximum(5000)
+                    spin.setValue(self.config[key].get(field, 0))
+                    hbox.addWidget(spin)
+                    self.setting_fields[key][field] = spin
+                elif field == "align":
+                    cb = QComboBox()
+                    cb.addItems(["left", "center"])
+                    cb.setCurrentText(self.config[key].get(field, "left"))
+                    hbox.addWidget(cb)
+                    self.setting_fields[key][field] = cb
+                else:
+                    txt = QLineEdit(self.config[key].get(field, ""))
+                    hbox.addWidget(txt)
+                    self.setting_fields[key][field] = txt
+                vbox.addLayout(hbox)
+
+            # Color picker
+            color_btn = QPushButton("Set Color")
+            color_btn.clicked.connect(lambda _, k=key: self.pick_color(k))
+            vbox.addWidget(color_btn)
+
+            color_lbl = QLabel("Current Color: " + str(self.config[key]["color"]))
+            self.setting_fields[key]["color_label"] = color_lbl
+            vbox.addWidget(color_lbl)
+
+            group.setLayout(vbox)
+            layout.addWidget(group)
+
+        save_btn = QPushButton("Save Settings")
+        save_btn.clicked.connect(self.save_config)
+        layout.addWidget(save_btn)
+
+        self.settings_tab.setLayout(layout)
+
+    def load_config(self):
+        if not os.path.exists(CONFIG_PATH):
+            QMessageBox.critical(self, "Missing Config", "config.json not found!")
+            sys.exit(1)
+        with open(CONFIG_PATH, 'r') as f:
+            return json.load(f)
+
+    def pick_color(self, key):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            rgb = [color.red(), color.green(), color.blue()]
+            self.config[key]["color"] = rgb
+            self.setting_fields[key]["color_label"].setText("Current Color: " + str(rgb))
+
+    def save_config(self):
+        for key in self.setting_fields:
+            for field in ["x", "y", "font", "size", "align"]:
+                widget = self.setting_fields[key][field]
+                if isinstance(widget, QSpinBox):
+                    self.config[key][field] = widget.value()
+                elif isinstance(widget, QComboBox):
+                    self.config[key][field] = widget.currentText()
+                else:
+                    self.config[key][field] = widget.text()
+        with open(CONFIG_PATH, 'w') as f:
+            json.dump(self.config, f, indent=2)
+        QMessageBox.information(self, "Saved", "Configuration updated successfully.")
+
+    # ========== HELPERS ==========
     def add_file_input(self, label, file_filter, layout):
         layout.addWidget(QLabel(label))
         hbox = QHBoxLayout()
         le = QLineEdit()
         btn = QPushButton("Browse")
-        def browse():
-            path, _ = QFileDialog.getOpenFileName(self, f"Select {label}", "", file_filter)
-            if path:
-                le.setText(path)
-        btn.clicked.connect(browse)
+        btn.clicked.connect(lambda: self.browse_file(le, file_filter))
         hbox.addWidget(le)
         hbox.addWidget(btn)
         layout.addLayout(hbox)
         return le
+
+    def browse_file(self, line_edit, file_filter):
+        path, _ = QFileDialog.getOpenFileName(self, "Select File", "", file_filter)
+        if path:
+            line_edit.setText(path)
 
     def add_folder_input(self, label, layout):
         layout.addWidget(QLabel(label))
         hbox = QHBoxLayout()
         le = QLineEdit()
         btn = QPushButton("Browse")
-        def browse():
-            folder = QFileDialog.getExistingDirectory(self, f"Select {label}")
-            if folder:
-                le.setText(folder)
-        btn.clicked.connect(browse)
+        btn.clicked.connect(lambda: self.browse_folder(le))
         hbox.addWidget(le)
         hbox.addWidget(btn)
         layout.addLayout(hbox)
         return le
+
+    def browse_folder(self, line_edit):
+        folder = QFileDialog.getExistingDirectory(self, "Select Folder")
+        if folder:
+            line_edit.setText(folder)
 
     def add_text_input(self, label, layout, echo=False):
         layout.addWidget(QLabel(label))
@@ -140,12 +224,8 @@ class CertigoGUI(QWidget):
     def toggle_email_section(self):
         self.email_group.setVisible(self.email_checkbox.isChecked())
 
-    def log(self, message):
-        self.log_output.append(message)
-        self.log_output.verticalScrollBar().setValue(self.log_output.verticalScrollBar().maximum())
-
     def show_gmail_help(self):
-        help_text = (
+        text = (
             "How to Create a Gmail App Password:\n\n"
             "1. Go to your Google Account → Security tab.\n"
             "2. Enable 2-Step Verification (if not already enabled).\n"
@@ -154,12 +234,17 @@ class CertigoGUI(QWidget):
             "5. Click 'Generate' – copy the 16-character password.\n"
             "6. Paste it here in 'Gmail App Password'."
         )
-        QMessageBox.information(self, "Gmail App Password Instructions", help_text)
+        QMessageBox.information(self, "Gmail App Password Instructions", text)
+
+    def log(self, message):
+        self.log_output.append(message)
+        self.log_output.verticalScrollBar().setValue(self.log_output.verticalScrollBar().maximum())
 
     def run_certigo(self):
         try:
             df = pd.read_excel(self.excel_input.text())
-            config = json.load(open(self.config_input.text()))
+            with open(CONFIG_PATH) as f:
+                config = json.load(f)
             bg = self.bg_input.text()
             paper_size = self.paper_size.currentText()
             orientation = self.orientation.currentText()
@@ -211,7 +296,6 @@ class CertigoGUI(QWidget):
                 self.progress_bar.setValue(i + 1)
 
             QMessageBox.information(self, "Done", "All certificates processed successfully.")
-
         except Exception as e:
             self.log(f"❌ Error: {e}")
             QMessageBox.critical(self, "Error", str(e))

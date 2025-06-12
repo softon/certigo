@@ -16,7 +16,7 @@ venv\Scripts\activate
 ```
 4. Install required packages
 ```
-pip install pandas yagmail reportlab pyhanko click openpyxl pyopenssl
+pip install pandas yagmail reportlab pyhanko click openpyxl pyopenssl PyQt5 PyMuPDF
 ```
 
 # Generate Self Signed Certificate for Digital Signing of Documents
