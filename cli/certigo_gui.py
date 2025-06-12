@@ -1,32 +1,35 @@
-import sys
-import os
-import json
+import sys, os, json, fitz
 import pandas as pd
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QFileDialog, QVBoxLayout, QLabel, QPushButton, QLineEdit,
     QComboBox, QTextEdit, QCheckBox, QHBoxLayout, QGroupBox, QProgressBar, QMessageBox,
-    QTabWidget, QSpinBox, QColorDialog
+    QTabWidget, QSpinBox, QColorDialog, QScrollArea
 )
+from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt
 from certigo import create_certificate, digitally_sign, send_email
 
 CONFIG_PATH = "config.json"
+PREVIEW_PDF = "__preview__.pdf"
 
 class CertigoGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Certigo Certificate Generator")
-        self.setGeometry(100, 100, 750, 800)
+        self.setGeometry(100, 100, 800, 900)
 
         self.tabs = QTabWidget()
         self.main_tab = QWidget()
         self.settings_tab = QWidget()
+        self.preview_tab = QWidget()
 
         self.tabs.addTab(self.main_tab, "Main")
         self.tabs.addTab(self.settings_tab, "Settings")
+        self.tabs.addTab(self.preview_tab, "Preview")
 
         self.build_main_tab()
         self.build_settings_tab()
+        self.build_preview_tab()
 
         layout = QVBoxLayout()
         layout.addWidget(self.tabs)
@@ -95,8 +98,8 @@ class CertigoGUI(QWidget):
         layout = QVBoxLayout()
 
         self.config = self.load_config()
-
         self.setting_fields = {}
+
         for key in ["name", "cert_no"]:
             group = QGroupBox(f"{key.upper()} Settings")
             vbox = QVBoxLayout()
@@ -136,11 +139,29 @@ class CertigoGUI(QWidget):
             group.setLayout(vbox)
             layout.addWidget(group)
 
+        hbox = QHBoxLayout()
         save_btn = QPushButton("Save Settings")
         save_btn.clicked.connect(self.save_config)
-        layout.addWidget(save_btn)
+        hbox.addWidget(save_btn)
 
+        preview_btn = QPushButton("Preview")
+        preview_btn.clicked.connect(self.generate_preview)
+        hbox.addWidget(preview_btn)
+
+        layout.addLayout(hbox)
         self.settings_tab.setLayout(layout)
+
+    def build_preview_tab(self):
+        layout = QVBoxLayout()
+        self.preview_label = QLabel("No preview yet.")
+        self.preview_label.setAlignment(Qt.AlignCenter)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(self.preview_label)
+        layout.addWidget(scroll)
+
+        self.preview_tab.setLayout(layout)
 
     def load_config(self):
         if not os.path.exists(CONFIG_PATH):
@@ -160,15 +181,30 @@ class CertigoGUI(QWidget):
         for key in self.setting_fields:
             for field in ["x", "y", "font", "size", "align"]:
                 widget = self.setting_fields[key][field]
-                if isinstance(widget, QSpinBox):
-                    self.config[key][field] = widget.value()
-                elif isinstance(widget, QComboBox):
-                    self.config[key][field] = widget.currentText()
-                else:
-                    self.config[key][field] = widget.text()
+                self.config[key][field] = widget.currentText() if isinstance(widget, QComboBox) else widget.text() if isinstance(widget, QLineEdit) else widget.value()
         with open(CONFIG_PATH, 'w') as f:
             json.dump(self.config, f, indent=2)
         QMessageBox.information(self, "Saved", "Configuration updated successfully.")
+
+    def generate_preview(self):
+        bg = self.bg_input.text()
+        if not os.path.exists(bg):
+            QMessageBox.warning(self, "Missing Background", "Please select a background image.")
+            return
+        orientation = self.orientation.currentText()
+        paper_size = self.paper_size.currentText()
+        create_certificate("John Doe", "PREVIEW123", bg, PREVIEW_PDF, paper_size, orientation, self.config)
+
+        try:
+            doc = fitz.open(PREVIEW_PDF)
+            page = doc[0]
+            pix = page.get_pixmap(dpi=150)
+            img = QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format_RGB888)
+            pixmap = QPixmap.fromImage(img)
+            self.preview_label.setPixmap(pixmap)
+            self.tabs.setCurrentWidget(self.preview_tab)
+        except Exception as e:
+            QMessageBox.critical(self, "Preview Error", f"Could not render preview: {e}")
 
     # ========== HELPERS ==========
     def add_file_input(self, label, file_filter, layout):
