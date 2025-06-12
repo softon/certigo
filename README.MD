@@ -111,3 +111,18 @@ pyinstaller --onefile --name certigen certigen.py
 pyinstaller splash.py --noconfirm --onefile --windowed --icon=icon.ico --name=Certigo --clean
 
 ```
+
+
+# Use UPX Compression
+UPX (Ultimate Packer for eXecutables) compresses .exe files losslessly.
+
+🔧 How to use:
+Install UPX:
+Download from https://upx.github.io/ and add it to your PATH.
+
+Rebuild with UPX enabled:
+
+```
+pyinstaller yourscript.py --onefile --windowed --noconfirm --clean --upx-dir=C:\path\to\upx
+```
+🎯 Compression rate: 20%–50% smaller

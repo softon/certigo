@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certigo - Certificate Generator</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .fade-in {
+      animation: fadeIn 2s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-blue-50 to-white min-h-screen flex flex-col items-center justify-center p-6">
+
+  <div class="max-w-3xl w-full fade-in text-center">
+    <!-- Logo -->
+    <div class="mb-6">
+      <img src="icon.png" alt="Certigo Logo" class="mx-auto w-24 h-24 rounded-full shadow-lg">
+    </div>
+
+    <!-- Title & Tagline -->
+    <h1 class="text-4xl font-bold text-gray-800 mb-2">Certigo</h1>
+    <p class="text-lg text-gray-600 mb-6">Effortless Certificate Generation and Digital Signing</p>
+
+    <!-- Download Button -->
+    <a href="https://github.com/softon/certigo/releases/download/v1.1/Certigo.Setup.exe" download class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold px-6 py-3 rounded-lg shadow transition duration-300">
+      Download for Windows
+    </a>
+
+    <!-- Features -->
+    <div class="mt-12 text-left px-4 sm:px-10">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4">Why Certigo?</h2>
+      <ul class="list-disc list-inside text-gray-700 space-y-2">
+        <li>📄 Generate personalized certificates from Excel data</li>
+        <li>🔏 Digitally sign certificates using self-signed keys</li>
+        <li>📧 Email certificates automatically to recipients</li>
+        <li>🖥️ Simple and intuitive PyQt5 GUI</li>
+      </ul>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-16 text-sm text-gray-400">
+      &copy; 2025 Certigo by Prof. Shiburaj Pappu
+    </footer>
+  </div>
+</body>
+</html>
