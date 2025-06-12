@@ -2,27 +2,23 @@
 A simple cli and gui tool to generate customised certificates and email it using your gmail account.
 
 ## Setup
-1. Go to the `cli` folder
-```
-cd cli
-```
-2. Start a new `venv` if not already present
+1. Start a new `venv` if not already present
 ```
 py -3.13 -m venv venv
 ```
-3. Activate the `venv`
+1. Activate the `venv`
 ```
 venv\Scripts\activate
 ```
-4. Install required packages
+1. Install required packages
 ```
-pip install pandas yagmail reportlab pyhanko click openpyxl pyopenssl PyQt5 PyMuPDF
+pip install pandas yagmail reportlab pyhanko click openpyxl pyopenssl PyQt5 PyMuPDF pyinstaller
 ```
 
 # Generate Self Signed Certificate for Digital Signing of Documents
-1. Run `certgen.py`
+1. Run `certigen.py`
 ```
-python certgen.py
+python certigen.py
 ```
 2. Complete the wizard and two files will be created `cert.pem` and `key.pem`
 
@@ -112,4 +108,6 @@ pip install pyinstaller
 pyinstaller --onefile --name certigo --add-data "config.json;data.xlsx;template.png" certigo.py
 pyinstaller --onefile --name certigo certigo.py
 pyinstaller --onefile --name certigen certigen.py
+pyinstaller splash.py --noconfirm --onefile --windowed --icon=icon.ico --name=Certigo --clean
+
 ```

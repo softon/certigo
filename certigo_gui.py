@@ -1,4 +1,4 @@
-import sys, os, json, fitz
+import sys, os, json, fitz, subprocess
 import pandas as pd
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QFileDialog, QVBoxLayout, QLabel, QPushButton, QLineEdit,
@@ -35,7 +35,6 @@ class CertigoGUI(QWidget):
         layout.addWidget(self.tabs)
         self.setLayout(layout)
 
-    # ========== MAIN TAB ==========
     def build_main_tab(self):
         layout = QVBoxLayout()
 
@@ -55,6 +54,11 @@ class CertigoGUI(QWidget):
         self.cert_input = self.add_file_input("Certificate File (.pem)", "*.pem", sign_layout)
         self.key_input = self.add_file_input("Private Key File (.pem)", "*.pem", sign_layout)
         self.pass_input = self.add_text_input("Private Key Password", sign_layout, echo=True)
+
+        generate_btn = QPushButton("Generate New Certificate & Key")
+        generate_btn.clicked.connect(self.run_certigen_wizard)
+        sign_layout.addWidget(generate_btn)
+
         self.sign_group.setLayout(sign_layout)
         layout.addWidget(self.sign_group)
 
@@ -92,6 +96,23 @@ class CertigoGUI(QWidget):
         layout.addWidget(self.log_output)
 
         self.main_tab.setLayout(layout)
+
+    def run_certigen_wizard(self):
+        try:
+            if sys.platform == "win32":
+                subprocess.Popen(["start", "cmd", "/k", "certigen.exe"], shell=True)
+            else:
+                subprocess.Popen(["x-terminal-emulator", "-e", "certigen.exe"])
+
+            QMessageBox.information(self, "Wizard Launched", "Follow the instructions in the new terminal window.\n\nOnce completed, click OK to continue.")
+
+            if os.path.exists("cert.pem"):
+                self.cert_input.setText(os.path.abspath("cert.pem"))
+            if os.path.exists("key.pem"):
+                self.key_input.setText(os.path.abspath("key.pem"))
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to launch wizard: {e}")
 
     # ========== SETTINGS TAB ==========
     def build_settings_tab(self):

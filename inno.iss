@@ -4,16 +4,16 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{D833AA4F-BE08-44C6-9AA2-49F59CB72A00}
+AppId={{9859D129-99D3-41D7-8801-41340E478457}
 AppName=CertiGo
-AppVersion=1.0
-;AppVerName=CertiGo 1.0
+AppVersion=1.1
+;AppVerName=CertiGo 1.1
 AppPublisher=Softon Technologies
 AppPublisherURL=https://softon.org
 AppSupportURL=https://softon.org
 AppUpdatesURL=https://softon.org
 DefaultDirName={autopf}\CertiGo
-UninstallDisplayIcon={app}\certigo.exe
+UninstallDisplayIcon={app}\Certigo.exe
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run
 ; on anything but x64 and Windows 11 on Arm.
 ArchitecturesAllowed=x64compatible
@@ -23,27 +23,33 @@ ArchitecturesAllowed=x64compatible
 ; the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
-; Uncomment the following line to run in non administrative install mode (install for current user only).
-;PrivilegesRequired=lowest
+; Remove the following line to run in administrative install mode (install for all users).
+PrivilegesRequired=lowest
 OutputBaseFilename=mysetup
-SetupIconFile=C:\laragon\www\certigo\cli\icon.ico
+SetupIconFile=C:\laragon\www\certigo\dist\icon.ico
 SolidCompression=yes
 WizardStyle=modern
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+
 [Files]
-Source: "C:\laragon\www\certigo\cli\dist\certigo.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\laragon\www\certigo\cli\dist\certigen.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\laragon\www\certigo\cli\dist\config.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\laragon\www\certigo\cli\dist\data.xlsx"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\laragon\www\certigo\cli\dist\template.png"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\laragon\www\certigo\dist\Certigo.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\laragon\www\certigo\dist\certigen.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\laragon\www\certigo\dist\config.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\laragon\www\certigo\dist\data.xlsx"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\laragon\www\certigo\dist\icon.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\laragon\www\certigo\dist\icon.png"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\laragon\www\certigo\dist\template.png"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\CertiGo"; Filename: "{app}\certigo.exe"
+Name: "{autoprograms}\CertiGo"; Filename: "{app}\Certigo.exe"
+Name: "{autodesktop}\CertiGo"; Filename: "{app}\Certigo.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\certigo.exe"; Description: "{cm:LaunchProgram,CertiGo}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Certigo.exe"; Description: "{cm:LaunchProgram,CertiGo}"; Flags: nowait postinstall skipifsilent
 
